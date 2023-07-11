@@ -1,0 +1,56 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: lemmings
+  labels:
+    app: lemmings
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: lemmings
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lemmings
+  template:
+    metadata:
+      labels:
+        app: lemmings
+    spec:
+      containers:
+        - name: lemmings
+          image: arn.ocir.io/axiirc3u3iv6/lemmings:latest
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: ocirsecret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lemmings
+  labels:
+    app: lemmings
+spec:
+  ports:
+    - port: 80
+      name: lemmings
+  selector:
+    app: lemmings
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: app-tls
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`lemmings.akerud.se`)
+      services:
+        - name: lemmings
+          port: 80
+  tls:
+    certResolver: le
